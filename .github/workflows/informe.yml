@@ -1,1 +1,41 @@
-Por completar
+name: Informe Automático Avícola
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # Ejecutar cada 15 minutos
+  workflow_dispatch:        # Permite ejecutar manualmente desde GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar análisis
+        env:
+          AIO_USERNAME: ${{ secrets.AIO_USERNAME }}
+          AIO_KEY: ${{ secrets.AIO_KEY }}
+        run: python main.py
+
+      - name: Preparar carpeta de publicación
+        run: |
+          mkdir public
+          cp informe.html public/
+          cp clusters.png public/
+          cp tendencia.png public/
+
+      - name: Publicar en GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
