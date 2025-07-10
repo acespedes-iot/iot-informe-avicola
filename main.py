@@ -43,6 +43,17 @@ kmeans = KMeans(n_clusters=3, random_state=42)
 df["cluster"] = kmeans.fit_predict(X_scaled)
 cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
 
+# 📊 Mapa de calor de promedios por patrón
+import seaborn as sns  # asegúrate de que seaborn esté en requirements.txt
+
+plt.figure(figsize=(10, 4))
+sns.heatmap(cent, annot=True, cmap="coolwarm", fmt=".1f")
+plt.title("🗺 Mapa de calor de condiciones por patrón")
+plt.tight_layout()
+plt.savefig("heatmap.png")
+plt.close()
+
+
 colores = ["red", "blue", "green"]
 plt.figure()
 for c in range(3):
