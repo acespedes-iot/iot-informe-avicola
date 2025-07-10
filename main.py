@@ -111,7 +111,7 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     pm10 = row["pm10"]
     color = colores[idx_num]
 
-    interp = f"<li><span style='color:{color}'><b>Patrón {idx+1}</b>: "
+    interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
 
     # Evaluar patrones críticos
     if temp > 29 and hum_aire > 70 and nh3 > 25:
