@@ -60,6 +60,23 @@ for col in cent.columns:
 
 cent_norm.index = cent.index
 
+import matplotlib as mpl
+
+
+
+# 🔧 Forzar configuración global de tamaños
+mpl.rcParams.update({
+    'font.size': 13,         # Tamaño general
+    'axes.titlesize': 16,    # Título del gráfico
+    'axes.labelsize': 14,    # Etiquetas de ejes
+    'xtick.labelsize': 12,   # Etiquetas del eje X
+    'ytick.labelsize': 12,   # Etiquetas del eje Y
+    'legend.fontsize': 12,
+    'figure.titlesize': 16
+})
+
+
+
 # Crear heatmap con letra grande
 plt.figure(figsize=(12, 5))
 sns.heatmap(
