@@ -45,37 +45,39 @@ cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X
 
 
 
-# 📊 Mapa de calor de variables por patrón (con etiquetas y texto grande)
+# 📊 Mapa de calor de variables por patrón (con etiquetas legibles y escala individual)
 import seaborn as sns
 
-# Renombrar filas para mostrar "Patrón 1", "Patrón 2", etc.
+# Renombrar filas del heatmap
 cent.index = [f"Patrón {i+1}" for i in cent.index]
 
-# Normalizar por columna para aplicar colores relativos (0 a 1 por variable)
+# Normalización de cada variable entre 0 y 1
 cent_norm = cent.copy()
 for col in cent.columns:
     min_val = cent[col].min()
     max_val = cent[col].max()
-    if max_val - min_val == 0:
-        cent_norm[col] = 0.5
-    else:
-        cent_norm[col] = (cent[col] - min_val) / (max_val - min_val)
+    cent_norm[col] = 0.5 if max_val - min_val == 0 else (cent[col] - min_val) / (max_val - min_val)
 
-cent_norm.index = cent.index  # mantener etiquetas
+cent_norm.index = cent.index
 
-# Crear el heatmap con valores reales y colores normalizados
+# Crear heatmap con letra grande
 plt.figure(figsize=(12, 5))
 sns.heatmap(
     cent_norm,
-    annot=cent,              # Mostrar valores reales
+    annot=cent,               # Mostrar valores reales
     fmt=".1f",
     cmap="coolwarm",
-    annot_kws={"size": 11}   # Tamaño de letra más grande
+    annot_kws={"size": 13},   # ✅ Tamaño de fuente en celdas
+    cbar_kws={"shrink": 0.7}
 )
-plt.title("Mapa de calor de condiciones por patrón")
+
+plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=16)
+plt.xticks(fontsize=12, rotation=45)   # ✅ Ejes legibles
+plt.yticks(fontsize=12, rotation=0)
 plt.tight_layout()
 plt.savefig("heatmap.png")
 plt.close()
+
 
 
 colores = ["red", "blue", "green"]
