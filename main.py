@@ -68,15 +68,30 @@ plt.savefig("tendencia.png")
 interpretaciones = []
 for idx, row in cent.iterrows():
     temp = row["temperatura"]
+    hum_aire = row["humedad_aire"]
+    hum_suelo = row["humedad_suelo"]
     nh3 = row["nh3"]
-    interp = f"<li><span style='color:{colores[idx]}'><b>Patrón {idx+1}</b>: Temp. ~{temp:.1f}°C, NH₃ ~{nh3:.1f} ppm — "
-    if nh3 > 50:
-        interp += "⚠️ Nivel crítico de amoníaco."
-    elif nh3 > 25:
-        interp += "🟠 Nivel elevado de amoníaco."
+    ilum = row["iluminacion"]
+    pm25 = row["pm25"]
+    pm10 = row["pm10"]
+    color = colores[idx]
+
+    interp = f"<li><span style='color:{color}'><b>Patrón {idx+1}</b>: "
+
+    # Evaluar patrones críticos
+    if temp > 29 and hum_aire > 70 and nh3 > 25:
+        interp += f"🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
+    elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
+        interp += f"🟠 Polvo y NH₃ elevados: alerta respiratoria.</span></li>"
+    elif hum_suelo > 50 and nh3 > 25 and (pm25 > 60 or pm10 > 150):
+        interp += f"🟤 Cama empapada con gases y polvo: foco de enfermedades.</span></li>"
+    elif temp > 30 and ilum > 400:
+        interp += f"🔶 Estrés lumínico-térmico: calor + luz excesiva.</span></li>"
+    elif 24 <= temp <= 28 and 50 <= hum_aire <= 70 and nh3 < 20 and pm25 < 35 and pm10 < 100:
+        interp += f"🟢 Condiciones ideales de confort ambiental.</span></li>"
     else:
-        interp += "🟢 Nivel seguro de amoníaco."
-    interp += "</span></li>"
+        interp += f"ℹ️ Combinación atípica: requiere seguimiento.</span></li>"
+
     interpretaciones.append(interp)
 
 html = f"""
