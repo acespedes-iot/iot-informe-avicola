@@ -72,7 +72,7 @@ sns.heatmap(
     cmap="coolwarm",
     annot_kws={"size": 11}   # Tamaño de letra más grande
 )
-plt.title("🗺 Mapa de calor de condiciones por patrón")
+plt.title("Mapa de calor de condiciones por patrón")
 plt.tight_layout()
 plt.savefig("heatmap.png")
 plt.close()
@@ -101,7 +101,7 @@ plt.tight_layout()
 plt.savefig("tendencia.png")
 
 interpretaciones = []
-for idx, row in cent.iterrows():
+for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     temp = row["temperatura"]
     hum_aire = row["humedad_aire"]
     hum_suelo = row["humedad_suelo"]
@@ -109,7 +109,7 @@ for idx, row in cent.iterrows():
     ilum = row["iluminacion"]
     pm25 = row["pm25"]
     pm10 = row["pm10"]
-    color = colores[idx]
+    color = colores[idx_num]
 
     interp = f"<li><span style='color:{color}'><b>Patrón {idx+1}</b>: "
 
