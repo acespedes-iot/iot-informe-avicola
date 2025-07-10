@@ -33,18 +33,10 @@ jobs:
           cp informe.html public/
           cp clusters.png public/
           cp tendencia.png public/
+          cp heatmap.png public/
 
       - name: Publicar en GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-
-      - name: Preparar carpeta de publicación
-        run: |
-          rm -rf public
-          mkdir public
-          cp informe.html public/
-          cp clusters.png public/
-          cp tendencia.png public/
-          cp heatmap.png public/
