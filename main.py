@@ -47,53 +47,54 @@ cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X
 
 # 📊 Mapa de calor de variables por patrón (con etiquetas legibles y escala individual)
 import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
-# Renombrar filas del heatmap
+# 🔧 Forzar configuración global
+mpl.rcParams.update({
+    'font.size': 12,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12
+})
+
+# Renombrar índices
 cent.index = [f"Patrón {i+1}" for i in cent.index]
 
-# Normalización de cada variable entre 0 y 1
+# Normalizar por variable
 cent_norm = cent.copy()
 for col in cent.columns:
     min_val = cent[col].min()
     max_val = cent[col].max()
     cent_norm[col] = 0.5 if max_val - min_val == 0 else (cent[col] - min_val) / (max_val - min_val)
-
 cent_norm.index = cent.index
 
-import matplotlib as mpl
+# Crear figura
+fig, ax = plt.subplots(figsize=(12, 5))
 
-
-
-# 🔧 Forzar configuración global de tamaños
-mpl.rcParams.update({
-    'font.size': 13,         # Tamaño general
-    'axes.titlesize': 16,    # Título del gráfico
-    'axes.labelsize': 14,    # Etiquetas de ejes
-    'xtick.labelsize': 12,   # Etiquetas del eje X
-    'ytick.labelsize': 12,   # Etiquetas del eje Y
-    'legend.fontsize': 12,
-    'figure.titlesize': 16
-})
-
-
-
-# Crear heatmap con letra grande
-plt.figure(figsize=(12, 5))
-sns.heatmap(
+# Crear mapa de calor
+sns_heatmap = sns.heatmap(
     cent_norm,
-    annot=cent,               # Mostrar valores reales
+    annot=cent,
     fmt=".1f",
     cmap="coolwarm",
-    annot_kws={"size": 13},   # ✅ Tamaño de fuente en celdas
-    cbar_kws={"shrink": 0.7}
+    cbar_kws={"shrink": 0.7},
+    ax=ax
 )
 
+# 🔴 Aplicar cambio manual a las anotaciones (texto dentro de celdas)
+for text in sns_heatmap.texts:
+    text.set_fontsize(12)
+
+# Título y ajustes
 plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=16)
-plt.xticks(fontsize=12, rotation=45)   # ✅ Ejes legibles
-plt.yticks(fontsize=12, rotation=0)
+plt.xticks(rotation=45)
+plt.yticks(rotation=0)
 plt.tight_layout()
 plt.savefig("heatmap.png")
 plt.close()
+
 
 
 
