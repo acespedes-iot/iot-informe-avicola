@@ -39,3 +39,11 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
+
+      - name: Preparar carpeta de publicación
+        run: |
+          mkdir public
+          cp informe.html public/
+          cp clusters.png public/
+          cp tendencia.png public/
+          cp heatmap.png public/
