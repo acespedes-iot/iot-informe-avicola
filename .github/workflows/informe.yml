@@ -42,6 +42,7 @@ jobs:
 
       - name: Preparar carpeta de publicación
         run: |
+          rm -rf public
           mkdir public
           cp informe.html public/
           cp clusters.png public/
