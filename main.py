@@ -43,15 +43,32 @@ kmeans = KMeans(n_clusters=3, random_state=42)
 df["cluster"] = kmeans.fit_predict(X_scaled)
 cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
 
-# 📊 Mapa de calor de promedios por patrón
-import seaborn as sns  # asegúrate de que seaborn esté en requirements.txt
+# 📊 Mapa de calor de variables por patrón (normalizado por columna)
+import seaborn as sns
 
+# Normalizamos cada columna entre 0 y 1 (min-max scaling por variable)
+cent_norm = cent.copy()
+for col in cent.columns:
+    min_val = cent[col].min()
+    max_val = cent[col].max()
+    if max_val - min_val == 0:
+        cent_norm[col] = 0.5  # valor neutro si no hay variación
+    else:
+        cent_norm[col] = (cent[col] - min_val) / (max_val - min_val)
+
+# Graficamos con los valores originales pero usando los colores normalizados
 plt.figure(figsize=(10, 4))
-sns.heatmap(cent, annot=True, cmap="coolwarm", fmt=".1f")
-plt.title("🗺 Mapa de calor de condiciones por patrón")
+sns.heatmap(
+    cent_norm,
+    annot=cent,  # mostramos los valores reales
+    cmap="coolwarm",
+    fmt=".1f"
+)
+plt.title("🗺 Mapa de calor de condiciones por patrón (colores relativos)")
 plt.tight_layout()
 plt.savefig("heatmap.png")
 plt.close()
+
 
 
 colores = ["red", "blue", "green"]
