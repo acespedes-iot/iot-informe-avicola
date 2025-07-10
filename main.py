@@ -11,8 +11,8 @@ AIO_KEY = os.getenv("AIO_KEY")
 
 FEEDS = {
     'temperatura': 'temperatura',
-    'humedad_aire': 'humedad_aire',
-    'humedad_suelo': 'humedad_suelo',
+    'humedad_aire': 'humedad-aire',
+    'humedad_suelo': 'humedad-suelo',
     'iluminacion': 'iluminacion',
     'nh3': 'nh3',
     'pm25': 'pm25',
