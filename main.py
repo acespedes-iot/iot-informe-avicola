@@ -8,7 +8,7 @@ import matplotlib as mpl
 import seaborn as sns
 import os
 
-# 📡 Configuración de Adafruit IO
+# 📡 Configuración Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
 AIO_KEY = os.getenv("AIO_KEY")
 
@@ -35,7 +35,6 @@ def obtener_feed(feed):
 data = {k: obtener_feed(v) for k, v in FEEDS.items()}
 n = min(len(v) for v in data.values())
 
-# 📊 Construir DataFrame
 df = pd.DataFrame({
     "fecha": pd.to_datetime([x['created_at'] for x in data['temperatura'][:n]]) - timedelta(hours=4),
     **{k: [float(x['value']) for x in data[k][:n]] for k in FEEDS if k != 'fecha'}
@@ -57,28 +56,15 @@ for col in cent.columns:
     cmin, cmax = cent[col].min(), cent[col].max()
     cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
 
-fig, ax = plt.subplots(figsize=(14, 4))  # ALTURA reducida
+fig, ax = plt.subplots(figsize=(14, 4))
 sns.heatmap(
-    cent_norm,
-    cmap="coolwarm",
-    cbar_kws={"shrink": 0.6},
-    annot=False,
-    linewidths=0.5,
-    linecolor='gray',
-    ax=ax
+    cent_norm, cmap="coolwarm", cbar_kws={"shrink": 0.6},
+    annot=False, linewidths=0.5, linecolor='gray', ax=ax
 )
-
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
-        val = cent.iloc[i, j]
-        ax.text(
-            j + 0.5, i + 0.5,
-            f"{val:.1f}",
-            ha='center', va='center',
-            fontsize=12,
-            fontweight='bold',
-            color='black'
-        )
+        ax.text(j + 0.5, i + 0.5, f"{cent.iloc[i, j]:.1f}", ha='center', va='center',
+                fontsize=12, fontweight='bold', color='black')
 
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
@@ -98,44 +84,33 @@ plt.legend()
 plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
-
-# 📈 Tendencias con doble eje y todas las variables
-plt.figure(figsize=(12, 6))
-df_ordenado = df.sort_values("fecha")
-
-ax1 = plt.gca()
-ax2 = ax1.twinx()
-
-# Variables en eje izquierdo (°C y %)
-for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
-    ax1.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
-ax1.set_ylabel("°C / %", color="firebrick")
-ax1.tick_params(axis='y', labelcolor="firebrick")
-
-# Variables en eje derecho (lux y ppm)
-for var in ["iluminacion", "nh3", "pm25", "pm10"]:
-    ax2.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
-ax2.set_ylabel("lux / ppm", color="green")
-ax2.tick_params(axis='y', labelcolor="green")
-
-# Estética y leyenda externa
-lines_1, labels_1 = ax1.get_legend_handles_labels()
-lines_2, labels_2 = ax2.get_legend_handles_labels()
-ax2.legend(
-    lines_1 + lines_2,
-    labels_1 + labels_2,
-    loc="center left",
-    bbox_to_anchor=(1.12, 0.5),
-    fontsize=10,
-    frameon=False
-)
-
-ax1.set_title("📈 Tendencias recientes", fontsize=16)
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.savefig("tendencia.png", bbox_inches="tight")
 plt.close()
 
+# 📈 Tendencia 1: Temperatura y Humedades
+plt.figure(figsize=(10, 4))
+for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
+    plt.plot(df["fecha"], df[var], label=var)
+plt.xticks(rotation=45)
+plt.title("Tendencias: Temperatura y Humedades", fontsize=14)
+plt.xlabel("Fecha")
+plt.ylabel("Valor")
+plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.35), ncol=3)
+plt.tight_layout()
+plt.savefig("tendencia_1.png", bbox_inches='tight')
+plt.close()
+
+# 📈 Tendencia 2: Iluminación y Calidad de Aire
+plt.figure(figsize=(10, 4))
+for var in ["iluminacion", "nh3", "pm25", "pm10"]:
+    plt.plot(df["fecha"], df[var], label=var)
+plt.xticks(rotation=45)
+plt.title("Tendencias: Iluminación y Calidad del Aire", fontsize=14)
+plt.xlabel("Fecha")
+plt.ylabel("Valor")
+plt.legend(loc="lower center", bbox_to_anchor=(0.5, -0.35), ncol=4)
+plt.tight_layout()
+plt.savefig("tendencia_2.png", bbox_inches='tight')
+plt.close()
 
 # 🧠 Interpretación
 interpretaciones = []
@@ -150,7 +125,6 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     color = colores[idx_num]
 
     interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
-
     if temp > 29 and hum_aire > 70 and nh3 > 25:
         interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
     elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
@@ -171,10 +145,9 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
         interp += "🟢 Condiciones ideales de confort ambiental y productivo.</span></li>"
     else:
         interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
-
     interpretaciones.append(interp)
 
-# 📝 HTML con fecha en español
+# 📝 HTML
 meses = {
     "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
     "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
@@ -208,8 +181,11 @@ html = f'''
 <h2>🗺 Mapa de calor de variables por patrón</h2>
 <img src="heatmap.png"><br><br>
 
-<h2>📈 Tendencias recientes</h2>
-<img src="tendencia.png"><br><br>
+<h2>📈 Tendencias: Temperatura y Humedades</h2>
+<img src="tendencia_1.png"><br><br>
+
+<h2>📈 Tendencias: Iluminación y Calidad del Aire</h2>
+<img src="tendencia_2.png"><br><br>
 
 </body>
 </html>
