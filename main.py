@@ -66,32 +66,38 @@ for col in cent.columns:
     cent_norm[col] = 0.5 if max_val - min_val == 0 else (cent[col] - min_val) / (max_val - min_val)
 cent_norm.index = cent.index
 
-fig, ax = plt.subplots(figsize=(14, 7))
+fig, ax = plt.subplots(figsize=(16, 8))  # Aumentar figura general
 
-
-sns_heatmap = sns.heatmap(
+# Mostrar mapa de calor SIN texto
+sns.heatmap(
     cent_norm,
-    annot=False,
-    fmt=".1f",
     cmap="coolwarm",
     cbar_kws={"shrink": 0.7},
     ax=ax
 )
 
-# ✅ Agregar textos manualmente con tamaño forzado
-for i in range(cent.shape[0]):
-    for j in range(cent.shape[1]):
+# Agregar texto manualmente con fuente grande
+for i in range(cent.shape[0]):  # filas
+    for j in range(cent.shape[1]):  # columnas
         value = cent.iloc[i, j]
         ax.text(
-            j + 0.5,         # posición horizontal
-            i + 0.5,         # posición vertical
-            f"{value:.1f}",  # texto a mostrar
+            j + 0.5,             # columna centrada
+            i + 0.5,             # fila centrada
+            f"{value:.1f}",      # texto
             ha='center',
             va='center',
-            color='black',
-            fontsize=14,     # 👈 tamaño de letra garantizado
-            fontweight='bold'
+            fontsize=16,         # 👈 TAMAÑO FUERTE Y VISIBLE
+            fontweight='bold',
+            color='black'
         )
+
+# Etiquetas estéticas
+ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=14)
+ax.set_yticklabels(cent.index, rotation=0, fontsize=14)
+plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=18)
+plt.tight_layout()
+plt.savefig("heatmap.png")
+plt.close()
 
 
 plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=16)
