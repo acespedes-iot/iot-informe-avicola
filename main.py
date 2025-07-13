@@ -10,7 +10,19 @@ import os
 import locale
 
 # 🌐 Configurar localización para fechas en español
-locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+# 🔄 Diccionario de traducción de meses
+MESES_ES = {
+    "January": "enero", "February": "febrero", "March": "marzo",
+    "April": "abril", "May": "mayo", "June": "junio",
+    "July": "julio", "August": "agosto", "September": "septiembre",
+    "October": "octubre", "November": "noviembre", "December": "diciembre"
+}
+
+def fecha_formato_es(dt):
+    nombre_mes = dt.strftime('%B')
+    mes_es = MESES_ES.get(nombre_mes, nombre_mes)
+    return dt.strftime(f'%-d de {mes_es} de %Y')
+
 
 # 📡 Configuración de Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
@@ -173,7 +185,8 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
 
 # 📝 Generar informe HTML
 fecha_actual = datetime.now() - timedelta(hours=4)
-fecha_es = fecha_actual.strftime('%d de %B de %Y')
+fecha_es = fecha_formato_es(fecha_actual)
+
 
 html = f'''
 <html>
