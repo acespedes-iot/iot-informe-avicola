@@ -67,17 +67,33 @@ for col in cent.columns:
 cent_norm.index = cent.index
 
 fig, ax = plt.subplots(figsize=(14, 7))
+
+
 sns_heatmap = sns.heatmap(
     cent_norm,
-    annot=cent,
+    annot=False,
     fmt=".1f",
     cmap="coolwarm",
     cbar_kws={"shrink": 0.7},
-    annot_kws={"fontsize": 14},
     ax=ax
 )
-#for text in sns_heatmap.texts:
-#    text.set_fontsize(12)
+
+# ✅ Agregar textos manualmente con tamaño forzado
+for i in range(cent.shape[0]):
+    for j in range(cent.shape[1]):
+        value = cent.iloc[i, j]
+        ax.text(
+            j + 0.5,         # posición horizontal
+            i + 0.5,         # posición vertical
+            f"{value:.1f}",  # texto a mostrar
+            ha='center',
+            va='center',
+            color='black',
+            fontsize=14,     # 👈 tamaño de letra garantizado
+            fontweight='bold'
+        )
+
+
 plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=16)
 plt.xticks(rotation=45)
 plt.yticks(rotation=0)
