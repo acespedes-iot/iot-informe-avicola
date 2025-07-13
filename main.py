@@ -147,36 +147,34 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
 
 # 📝 Generar HTML
 html = f'''
-
 <html>
 <head>
-  <meta charset='utf-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Informe IoT</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 1rem; }
-    img { max-width: 100%; height: auto; }
-    h1, h2 { color: #2c3e50; }
-    ul { padding-left: 1.2rem; }
-    li { margin-bottom: 0.7rem; }
+    body {{ font-family: Arial, sans-serif; padding: 1rem; }}
+    img {{ max-width: 100%; height: auto; }}
+    h1, h2 {{ color: #2c3e50; }}
+    ul {{ padding-left: 1.2rem; }}
+    li {{ margin-bottom: 0.7rem; }}
   </style>
 </head>
 <body>
-
 <h1>📊 Informe Automático IoT - Granjas Avícolas</h1>
 <p>📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
 
 <h2>📌 Agrupación de comportamientos</h2>
-<img src='clusters.png' width='600'><br><br>
+<img src="clusters.png" width="600"><br><br>
 <ul>{''.join(interpretaciones)}</ul>
 
 <h2>📈 Tendencias principales</h2>
-<img src='tendencia.png' width='600'><br><br>
+<img src="tendencia.png" width="600"><br><br>
 
 <h2>🗺 Mapa de calor de variables por patrón</h2>
-<img src='heatmap.png' width='600'>
-
-</body></html>
+<img src="heatmap.png" width="600">
+</body>
+</html>
 '''
 
 with open("informe.html", "w") as f:
