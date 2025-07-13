@@ -64,7 +64,7 @@ for col in cent.columns:
     cmin, cmax = cent[col].min(), cent[col].max()
     cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
 
-fig, ax = plt.subplots(figsize=(14, 10))
+fig, ax = plt.subplots(figsize=(14, 5))
 sns.heatmap(
     cent_norm,
     cmap="coolwarm",
@@ -89,7 +89,7 @@ for i in range(cent.shape[0]):
 
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=13)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=13)
-plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=18)
+plt.title("Mapa de calor de condiciones por patrón", fontsize=18)
 plt.savefig("heatmap.png", bbox_inches='tight')
 plt.close()
 
