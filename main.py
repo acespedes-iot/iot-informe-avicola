@@ -6,7 +6,9 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
+import matplotlib.pyplot as plt
 import matplotlib as mpl
+
 
 # 📡 Configuración de Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
@@ -49,7 +51,13 @@ kmeans = KMeans(n_clusters=3, random_state=42)
 df["cluster"] = kmeans.fit_predict(X_scaled)
 cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
 
+
+print("👉 Cent shape:", cent.shape)
+print(cent.head())
+
+
 # 🗺 Mapa de calor
+# Aumentar figura y configurar fuente
 mpl.rcParams.update({
     'font.size': 12,
     'axes.titlesize': 16,
@@ -58,34 +66,30 @@ mpl.rcParams.update({
     'ytick.labelsize': 12
 })
 
-# Renombrar índices para visibilidad
-cent.index = [f"Patrón {i+1}" for i in range(len(cent))]
+# ✅ Forzar índices legibles para patrones
+cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
 
-# Normalización por columna (escala individual)
+# ✅ Normalización de cada columna para escala de colores uniforme
 cent_norm = cent.copy()
 for col in cent.columns:
     min_val = cent[col].min()
     max_val = cent[col].max()
     if max_val - min_val == 0:
-        cent_norm[col] = 0.5  # valor neutro
+        cent_norm[col] = 0.5  # valor neutro si no hay variación
     else:
         cent_norm[col] = (cent[col] - min_val) / (max_val - min_val)
-cent_norm.index = cent.index
 
-# Dibujar heatmap
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(figsize=(16, 7))
+# ✅ Construcción del mapa de calor
+fig, ax = plt.subplots(figsize=(14, 7))
 sns.heatmap(
     cent_norm,
     cmap="coolwarm",
-    cbar_kws={"shrink": 0.6},
+    cbar_kws={"shrink": 0.7},
     annot=False,
     ax=ax
 )
 
-# Anotaciones de valores reales
+# ✅ Anotar valores reales manualmente con fuente grande
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
         valor = cent.iloc[i, j]
@@ -93,24 +97,22 @@ for i in range(cent.shape[0]):
             j + 0.5, i + 0.5,
             f"{valor:.1f}",
             ha='center', va='center',
-            fontsize=14, fontweight='bold', color='black'
+            fontsize=14,
+            fontweight='bold',
+            color='black'
         )
 
-# Etiquetas estéticas
-ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=14)
-ax.set_yticklabels(cent.index, rotation=0, fontsize=14)
+# ✅ Etiquetas y título
+ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=13)
+ax.set_yticklabels(cent.index, rotation=0, fontsize=13)
 plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=18)
 plt.tight_layout()
 plt.savefig("heatmap.png")
 plt.close()
 
 
-plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=16)
-plt.xticks(rotation=45)
-plt.yticks(rotation=0)
-plt.tight_layout()
-plt.savefig("heatmap.png")
-plt.close()
+
+
 
 # 🔘 Clústeres en 2D
 colores = ["red", "blue", "green"]
