@@ -7,22 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 import os
-import locale
-
-# 🌐 Configurar localización para fechas en español
-# 🔄 Diccionario de traducción de meses
-MESES_ES = {
-    "January": "enero", "February": "febrero", "March": "marzo",
-    "April": "abril", "May": "mayo", "June": "junio",
-    "July": "julio", "August": "agosto", "September": "septiembre",
-    "October": "octubre", "November": "noviembre", "December": "diciembre"
-}
-
-def fecha_formato_es(dt):
-    nombre_mes = dt.strftime('%B')
-    mes_es = MESES_ES.get(nombre_mes, nombre_mes)
-    return dt.strftime(f'%-d de {mes_es} de %Y')
-
 
 # 📡 Configuración de Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
@@ -64,27 +48,20 @@ X_scaled = scaler.fit_transform(X)
 kmeans = KMeans(n_clusters=3, random_state=42)
 df["cluster"] = kmeans.fit_predict(X_scaled)
 cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
-
-# 🗺 Mapa de calor de condiciones por patrón
-mpl.rcParams.update({
-    'font.size': 12,
-    'axes.titlesize': 16,
-    'axes.labelsize': 14,
-    'xtick.labelsize': 12,
-    'ytick.labelsize': 12
-})
-
 cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
+
+# 🗺 Mapa de calor
+mpl.rcParams.update({'font.size': 12})
 cent_norm = cent.copy()
 for col in cent.columns:
     cmin, cmax = cent[col].min(), cent[col].max()
     cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
 
-fig, ax = plt.subplots(figsize=(14, 5))
+fig, ax = plt.subplots(figsize=(14, 4))  # ALTURA reducida
 sns.heatmap(
     cent_norm,
     cmap="coolwarm",
-    cbar_kws={"shrink": 0.7},
+    cbar_kws={"shrink": 0.6},
     annot=False,
     linewidths=0.5,
     linecolor='gray',
@@ -98,18 +75,18 @@ for i in range(cent.shape[0]):
             j + 0.5, i + 0.5,
             f"{val:.1f}",
             ha='center', va='center',
-            fontsize=14,
+            fontsize=12,
             fontweight='bold',
             color='black'
         )
 
-ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=13)
-ax.set_yticklabels(cent.index, rotation=0, fontsize=13)
-plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=18)
+ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
+ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
+plt.title("Mapa de calor de condiciones por patrón", fontsize=16)
 plt.savefig("heatmap.png", bbox_inches='tight')
 plt.close()
 
-# 🔘 Clústeres en 2D
+# 🔘 Clústeres 2D
 colores = ["red", "blue", "green"]
 plt.figure()
 for c in range(3):
@@ -122,31 +99,40 @@ plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
 
-# 📈 Tendencias con doble eje
-fig, ax1 = plt.subplots(figsize=(12, 6))
-color1 = "tab:red"
-ax1.set_xlabel("Fecha")
-ax1.set_ylabel("Temperatura / Humedad / NH₃", color=color1)
-ax1.plot(df["fecha"], df["temperatura"], label="Temperatura", color="red")
-ax1.plot(df["fecha"], df["humedad_aire"], label="Humedad aire", color="orange")
-ax1.plot(df["fecha"], df["nh3"], label="NH₃", color="green")
+# 📈 Tendencias con doble eje y todas las variables
+fig, ax1 = plt.subplots(figsize=(12, 5))
+df_ordenado = df.sort_values("fecha")
+
+color1 = 'tab:red'
+color2 = 'tab:blue'
+color3 = 'tab:green'
+color4 = 'tab:orange'
+color5 = 'tab:purple'
+color6 = 'tab:brown'
+color7 = 'tab:gray'
+
+ax1.plot(df_ordenado["fecha"], df_ordenado["temperatura"], label="Temperatura", color=color1)
+ax1.plot(df_ordenado["fecha"], df_ordenado["humedad_aire"], label="Humedad Aire", color=color2)
+ax1.set_ylabel("°C / %", color=color1)
 ax1.tick_params(axis='y', labelcolor=color1)
 
 ax2 = ax1.twinx()
-color2 = "tab:blue"
-ax2.set_ylabel("Iluminación / PM2.5 / PM10", color=color2)
-ax2.plot(df["fecha"], df["iluminacion"], label="Iluminación", color="blue")
-ax2.plot(df["fecha"], df["pm25"], label="PM2.5", color="purple")
-ax2.plot(df["fecha"], df["pm10"], label="PM10", color="black")
-ax2.tick_params(axis='y', labelcolor=color2)
+ax2.plot(df_ordenado["fecha"], df_ordenado["humedad_suelo"], label="Humedad Suelo", color=color3)
+ax2.plot(df_ordenado["fecha"], df_ordenado["iluminacion"], label="Iluminación", color=color4)
+ax2.plot(df_ordenado["fecha"], df_ordenado["nh3"], label="NH₃", color=color5)
+ax2.plot(df_ordenado["fecha"], df_ordenado["pm25"], label="PM2.5", color=color6)
+ax2.plot(df_ordenado["fecha"], df_ordenado["pm10"], label="PM10", color=color7)
+ax2.set_ylabel("lux / ppm", color=color3)
+ax2.tick_params(axis='y', labelcolor=color3)
 
+fig.legend(loc="upper center", bbox_to_anchor=(0.5, 1.1), ncol=4)
+plt.title("Tendencias recientes", pad=20)
 fig.autofmt_xdate()
-fig.tight_layout()
-plt.title("📈 Tendencias recientes")
+plt.tight_layout()
 plt.savefig("tendencia.png")
 plt.close()
 
-# 🧠 Interpretación de patrones
+# 🧠 Interpretación
 interpretaciones = []
 for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     temp = row["temperatura"]
@@ -183,10 +169,14 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
 
     interpretaciones.append(interp)
 
-# 📝 Generar informe HTML
-fecha_actual = datetime.now() - timedelta(hours=4)
-fecha_es = fecha_formato_es(fecha_actual)
-
+# 📝 HTML con fecha en español
+meses = {
+    "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
+    "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
+    "09": "septiembre", "10": "octubre", "11": "noviembre", "12": "diciembre"
+}
+now = datetime.now() - timedelta(hours=4)
+fecha_str = f"{now.day} de {meses[now.strftime('%m')]} de {now.year} - {now.strftime('%H:%M')} (GMT-4)"
 
 html = f'''
 <html>
@@ -204,7 +194,7 @@ html = f'''
 </head>
 <body>
 <h1>📊 Informe Automático IoT - Granjas Avícolas</h1>
-<p>📅 Fecha: {fecha_es}</p>
+<p>📅 Fecha: {fecha_str}</p>
 
 <h2>📌 Agrupación de comportamientos</h2>
 <img src="clusters.png"><br><br>
@@ -213,8 +203,9 @@ html = f'''
 <h2>🗺 Mapa de calor de variables por patrón</h2>
 <img src="heatmap.png"><br><br>
 
-<h2>📈 Tendencias principales</h2>
-<img src="tendencia.png">
+<h2>📈 Tendencias recientes</h2>
+<img src="tendencia.png"><br><br>
+
 </body>
 </html>
 '''
