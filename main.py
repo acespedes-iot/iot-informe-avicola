@@ -66,17 +66,18 @@ for col in cent.columns:
     cent_norm[col] = 0.5 if max_val - min_val == 0 else (cent[col] - min_val) / (max_val - min_val)
 cent_norm.index = cent.index
 
-fig, ax = plt.subplots(figsize=(12, 5))
+fig, ax = plt.subplots(figsize=(14, 7))
 sns_heatmap = sns.heatmap(
     cent_norm,
     annot=cent,
     fmt=".1f",
     cmap="coolwarm",
     cbar_kws={"shrink": 0.7},
+    annot_kws={"fontsize": 14},
     ax=ax
 )
-for text in sns_heatmap.texts:
-    text.set_fontsize(12)
+#for text in sns_heatmap.texts:
+#    text.set_fontsize(12)
 plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=16)
 plt.xticks(rotation=45)
 plt.yticks(rotation=0)
