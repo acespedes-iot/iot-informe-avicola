@@ -100,37 +100,40 @@ plt.tight_layout()
 plt.savefig("clusters.png")
 
 # 📈 Tendencias con doble eje y todas las variables
-# 📈 Tendencias con doble eje y todas las variables
-fig, ax1 = plt.subplots(figsize=(12, 5))
+plt.figure(figsize=(12, 6))
 df_ordenado = df.sort_values("fecha")
 
-# Eje izquierdo (Temperatura y Humedad aire)
-color1 = 'tab:red'
-color2 = 'tab:blue'
-ax1.plot(df_ordenado["fecha"], df_ordenado["temperatura"], label="Temperatura", color=color1)
-ax1.plot(df_ordenado["fecha"], df_ordenado["humedad_aire"], label="Humedad Aire", color=color2)
-ax1.set_ylabel("°C / %", color=color1)
-ax1.tick_params(axis='y', labelcolor=color1)
-
-# Eje derecho (otros)
+ax1 = plt.gca()
 ax2 = ax1.twinx()
-ax2.plot(df_ordenado["fecha"], df_ordenado["humedad_suelo"], label="Humedad Suelo", color='tab:green')
-ax2.plot(df_ordenado["fecha"], df_ordenado["iluminacion"], label="Iluminación", color='tab:orange')
-ax2.plot(df_ordenado["fecha"], df_ordenado["nh3"], label="NH₃", color='tab:purple')
-ax2.plot(df_ordenado["fecha"], df_ordenado["pm25"], label="PM2.5", color='tab:brown')
-ax2.plot(df_ordenado["fecha"], df_ordenado["pm10"], label="PM10", color='tab:gray')
-ax2.set_ylabel("ppm / lux", color='tab:green')
-ax2.tick_params(axis='y', labelcolor='tab:green')
 
-# ✅ Leyenda combinada fuera del gráfico (a la derecha)
-lines, labels = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-fig.legend(lines + lines2, labels + labels2, loc='center left', bbox_to_anchor=(1.01, 0.5), borderaxespad=0.)
+# Variables en eje izquierdo (°C y %)
+for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
+    ax1.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
+ax1.set_ylabel("°C / %", color="firebrick")
+ax1.tick_params(axis='y', labelcolor="firebrick")
 
-plt.title("Tendencias recientes", pad=20)
-fig.tight_layout(rect=[0, 0, 0.85, 1])  # dejar espacio para leyenda derecha
-fig.autofmt_xdate()
-plt.savefig("tendencia.png")
+# Variables en eje derecho (lux y ppm)
+for var in ["iluminacion", "nh3", "pm25", "pm10"]:
+    ax2.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
+ax2.set_ylabel("lux / ppm", color="green")
+ax2.tick_params(axis='y', labelcolor="green")
+
+# Estética y leyenda externa
+lines_1, labels_1 = ax1.get_legend_handles_labels()
+lines_2, labels_2 = ax2.get_legend_handles_labels()
+ax2.legend(
+    lines_1 + lines_2,
+    labels_1 + labels_2,
+    loc="center left",
+    bbox_to_anchor=(1.12, 0.5),
+    fontsize=10,
+    frameon=False
+)
+
+ax1.set_title("📈 Tendencias recientes", fontsize=16)
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig("tendencia.png", bbox_inches="tight")
 plt.close()
 
 
