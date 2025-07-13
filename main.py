@@ -58,37 +58,42 @@ mpl.rcParams.update({
     'ytick.labelsize': 12
 })
 
-cent.index = [f"Patrón {i+1}" for i in cent.index]
+# Renombrar índices para visibilidad
+cent.index = [f"Patrón {i+1}" for i in range(len(cent))]
+
+# Normalización por columna (escala individual)
 cent_norm = cent.copy()
 for col in cent.columns:
     min_val = cent[col].min()
     max_val = cent[col].max()
-    cent_norm[col] = 0.5 if max_val - min_val == 0 else (cent[col] - min_val) / (max_val - min_val)
+    if max_val - min_val == 0:
+        cent_norm[col] = 0.5  # valor neutro
+    else:
+        cent_norm[col] = (cent[col] - min_val) / (max_val - min_val)
 cent_norm.index = cent.index
 
-fig, ax = plt.subplots(figsize=(16, 8))  # Aumentar figura general
+# Dibujar heatmap
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# Mostrar mapa de calor SIN texto
+fig, ax = plt.subplots(figsize=(16, 7))
 sns.heatmap(
     cent_norm,
     cmap="coolwarm",
-    cbar_kws={"shrink": 0.7},
+    cbar_kws={"shrink": 0.6},
+    annot=False,
     ax=ax
 )
 
-# Agregar texto manualmente con fuente grande
-for i in range(cent.shape[0]):  # filas
-    for j in range(cent.shape[1]):  # columnas
-        value = cent.iloc[i, j]
+# Anotaciones de valores reales
+for i in range(cent.shape[0]):
+    for j in range(cent.shape[1]):
+        valor = cent.iloc[i, j]
         ax.text(
-            j + 0.5,             # columna centrada
-            i + 0.5,             # fila centrada
-            f"{value:.1f}",      # texto
-            ha='center',
-            va='center',
-            fontsize=16,         # 👈 TAMAÑO FUERTE Y VISIBLE
-            fontweight='bold',
-            color='black'
+            j + 0.5, i + 0.5,
+            f"{valor:.1f}",
+            ha='center', va='center',
+            fontsize=14, fontweight='bold', color='black'
         )
 
 # Etiquetas estéticas
