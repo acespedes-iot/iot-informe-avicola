@@ -146,7 +146,7 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     interpretaciones.append(interp)
 
 # 📝 Generar HTML
-html = f"""
+html = f'''
 
 <html>
 <head>
@@ -177,7 +177,7 @@ html = f"""
 <img src='heatmap.png' width='600'>
 
 </body></html>
-"""
+'''
 
 with open("informe.html", "w") as f:
     f.write(html)
