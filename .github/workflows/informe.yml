@@ -29,11 +29,12 @@ jobs:
 
       - name: Preparar carpeta de publicación
         run: |
-          mkdir public
+          mkdir -p public
           cp informe.html public/
           cp clusters.png public/
-          cp tendencia.png public/
           cp heatmap.png public/
+          cp tendencia_1.png public/
+          cp tendencia_2.png public/
 
       - name: Publicar en GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
