@@ -100,37 +100,39 @@ plt.tight_layout()
 plt.savefig("clusters.png")
 
 # 📈 Tendencias con doble eje y todas las variables
+# 📈 Tendencias con doble eje y todas las variables
 fig, ax1 = plt.subplots(figsize=(12, 5))
 df_ordenado = df.sort_values("fecha")
 
+# Eje izquierdo (Temperatura y Humedad aire)
 color1 = 'tab:red'
 color2 = 'tab:blue'
-color3 = 'tab:green'
-color4 = 'tab:orange'
-color5 = 'tab:purple'
-color6 = 'tab:brown'
-color7 = 'tab:gray'
-
 ax1.plot(df_ordenado["fecha"], df_ordenado["temperatura"], label="Temperatura", color=color1)
 ax1.plot(df_ordenado["fecha"], df_ordenado["humedad_aire"], label="Humedad Aire", color=color2)
 ax1.set_ylabel("°C / %", color=color1)
 ax1.tick_params(axis='y', labelcolor=color1)
 
+# Eje derecho (otros)
 ax2 = ax1.twinx()
-ax2.plot(df_ordenado["fecha"], df_ordenado["humedad_suelo"], label="Humedad Suelo", color=color3)
-ax2.plot(df_ordenado["fecha"], df_ordenado["iluminacion"], label="Iluminación", color=color4)
-ax2.plot(df_ordenado["fecha"], df_ordenado["nh3"], label="NH₃", color=color5)
-ax2.plot(df_ordenado["fecha"], df_ordenado["pm25"], label="PM2.5", color=color6)
-ax2.plot(df_ordenado["fecha"], df_ordenado["pm10"], label="PM10", color=color7)
-ax2.set_ylabel("lux / ppm", color=color3)
-ax2.tick_params(axis='y', labelcolor=color3)
+ax2.plot(df_ordenado["fecha"], df_ordenado["humedad_suelo"], label="Humedad Suelo", color='tab:green')
+ax2.plot(df_ordenado["fecha"], df_ordenado["iluminacion"], label="Iluminación", color='tab:orange')
+ax2.plot(df_ordenado["fecha"], df_ordenado["nh3"], label="NH₃", color='tab:purple')
+ax2.plot(df_ordenado["fecha"], df_ordenado["pm25"], label="PM2.5", color='tab:brown')
+ax2.plot(df_ordenado["fecha"], df_ordenado["pm10"], label="PM10", color='tab:gray')
+ax2.set_ylabel("ppm / lux", color='tab:green')
+ax2.tick_params(axis='y', labelcolor='tab:green')
 
-fig.legend(loc="upper center", bbox_to_anchor=(0.5, 1.1), ncol=4)
+# ✅ Leyenda combinada fuera del gráfico (a la derecha)
+lines, labels = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+fig.legend(lines + lines2, labels + labels2, loc='center left', bbox_to_anchor=(1.01, 0.5), borderaxespad=0.)
+
 plt.title("Tendencias recientes", pad=20)
+fig.tight_layout(rect=[0, 0, 0.85, 1])  # dejar espacio para leyenda derecha
 fig.autofmt_xdate()
-plt.tight_layout()
 plt.savefig("tendencia.png")
 plt.close()
+
 
 # 🧠 Interpretación
 interpretaciones = []
