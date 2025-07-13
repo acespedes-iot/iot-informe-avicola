@@ -57,7 +57,11 @@ print(cent.head())
 
 
 # 🗺 Mapa de calor
-# Aumentar figura y configurar fuente
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+# 1. Aumentar tamaño general de texto y figura
 mpl.rcParams.update({
     'font.size': 12,
     'axes.titlesize': 16,
@@ -66,21 +70,27 @@ mpl.rcParams.update({
     'ytick.labelsize': 12
 })
 
-# ✅ Forzar índices legibles para patrones
+# 2. Verifica contenido de los centroides
+if cent.empty:
+    raise ValueError("⚠️ El DataFrame 'cent' está vacío. No se puede generar el mapa de calor.")
+
+# 3. Renombrar filas como Patrón 1, Patrón 2, etc.
 cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
 
-# ✅ Normalización de cada columna para escala de colores uniforme
+# 4. Normalizar por columna para comparar patrones
 cent_norm = cent.copy()
 for col in cent.columns:
-    min_val = cent[col].min()
-    max_val = cent[col].max()
-    if max_val - min_val == 0:
+    col_min = cent[col].min()
+    col_max = cent[col].max()
+    if col_max - col_min == 0:
         cent_norm[col] = 0.5  # valor neutro si no hay variación
     else:
-        cent_norm[col] = (cent[col] - min_val) / (max_val - min_val)
+        cent_norm[col] = (cent[col] - col_min) / (col_max - col_min)
 
-# ✅ Construcción del mapa de calor
+# 5. Crear figura y ejes
 fig, ax = plt.subplots(figsize=(14, 7))
+
+# 6. Dibujar mapa de calor sin anotaciones automáticas
 sns.heatmap(
     cent_norm,
     cmap="coolwarm",
@@ -89,24 +99,26 @@ sns.heatmap(
     ax=ax
 )
 
-# ✅ Anotar valores reales manualmente con fuente grande
+# 7. Añadir valores manualmente con control total del texto
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
-        valor = cent.iloc[i, j]
+        val = cent.iloc[i, j]
         ax.text(
             j + 0.5, i + 0.5,
-            f"{valor:.1f}",
+            f"{val:.1f}",
             ha='center', va='center',
             fontsize=14,
-            fontweight='bold',
-            color='black'
+            color='black',
+            fontweight='bold'
         )
 
-# ✅ Etiquetas y título
+# 8. Ajustar etiquetas y título
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=13)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=13)
 plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=18)
 plt.tight_layout()
+
+# 9. Guardar imagen correctamente
 plt.savefig("heatmap.png")
 plt.close()
 
