@@ -147,33 +147,7 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
 
 # 📝 Generar HTML
 html = f"""
-<html><head>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 10px;
-      font-size: 16px;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: auto;
-    }
-
-    table {
-      width: 100%;
-      overflow-x: auto;
-    }
-  </style>
-
-
-
-<meta charset='utf-8'><title>Informe IoT</title></head><body>
+<html><head><meta charset='utf-8'><title>Informe IoT</title></head><body>
 <h1>📊 Informe Automático IoT - Granjas Avícolas</h1>
 <p>📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
 
