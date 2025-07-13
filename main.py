@@ -1,12 +1,16 @@
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-import os
-import seaborn as sns
 import matplotlib as mpl
+import seaborn as sns
+import os
+import locale
+
+# 🌐 Configurar localización para fechas en español
+locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
 # 📡 Configuración de Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
@@ -37,7 +41,7 @@ n = min(len(v) for v in data.values())
 
 # 📊 Construir DataFrame
 df = pd.DataFrame({
-    "fecha": pd.to_datetime([x['created_at'] for x in data['temperatura'][:n]]),
+    "fecha": pd.to_datetime([x['created_at'] for x in data['temperatura'][:n]]) - timedelta(hours=4),
     **{k: [float(x['value']) for x in data[k][:n]] for k in FEEDS if k != 'fecha'}
 })
 
@@ -89,7 +93,7 @@ for i in range(cent.shape[0]):
 
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=13)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=13)
-plt.title("Mapa de calor de condiciones por patrón", fontsize=18)
+plt.title("📊 Mapa de calor de condiciones por patrón", fontsize=18)
 plt.savefig("heatmap.png", bbox_inches='tight')
 plt.close()
 
@@ -106,16 +110,29 @@ plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
 
-# 📈 Tendencias
-plt.figure()
-df_ordenado = df.sort_values("fecha")
-for var in ["temperatura", "humedad_aire", "nh3"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
-plt.xticks(rotation=45)
-plt.legend()
-plt.title("Tendencias principales")
-plt.tight_layout()
+# 📈 Tendencias con doble eje
+fig, ax1 = plt.subplots(figsize=(12, 6))
+color1 = "tab:red"
+ax1.set_xlabel("Fecha")
+ax1.set_ylabel("Temperatura / Humedad / NH₃", color=color1)
+ax1.plot(df["fecha"], df["temperatura"], label="Temperatura", color="red")
+ax1.plot(df["fecha"], df["humedad_aire"], label="Humedad aire", color="orange")
+ax1.plot(df["fecha"], df["nh3"], label="NH₃", color="green")
+ax1.tick_params(axis='y', labelcolor=color1)
+
+ax2 = ax1.twinx()
+color2 = "tab:blue"
+ax2.set_ylabel("Iluminación / PM2.5 / PM10", color=color2)
+ax2.plot(df["fecha"], df["iluminacion"], label="Iluminación", color="blue")
+ax2.plot(df["fecha"], df["pm25"], label="PM2.5", color="purple")
+ax2.plot(df["fecha"], df["pm10"], label="PM10", color="black")
+ax2.tick_params(axis='y', labelcolor=color2)
+
+fig.autofmt_xdate()
+fig.tight_layout()
+plt.title("📈 Tendencias recientes")
 plt.savefig("tendencia.png")
+plt.close()
 
 # 🧠 Interpretación de patrones
 interpretaciones = []
@@ -155,6 +172,9 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     interpretaciones.append(interp)
 
 # 📝 Generar informe HTML
+fecha_actual = datetime.now() - timedelta(hours=4)
+fecha_es = fecha_actual.strftime('%d de %B de %Y')
+
 html = f'''
 <html>
 <head>
@@ -171,17 +191,17 @@ html = f'''
 </head>
 <body>
 <h1>📊 Informe Automático IoT - Granjas Avícolas</h1>
-<p>📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+<p>📅 Fecha: {fecha_es}</p>
 
 <h2>📌 Agrupación de comportamientos</h2>
 <img src="clusters.png"><br><br>
 <ul>{''.join(interpretaciones)}</ul>
 
-<h2>📈 Tendencias principales</h2>
-<img src="tendencia.png"><br><br>
-
 <h2>🗺 Mapa de calor de variables por patrón</h2>
-<img src="heatmap.png">
+<img src="heatmap.png"><br><br>
+
+<h2>📈 Tendencias principales</h2>
+<img src="tendencia.png">
 </body>
 </html>
 '''
