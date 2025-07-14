@@ -10,15 +10,16 @@
     h1, h2 { color: #2c3e50; }
     ul { padding-left: 1.2rem; }
     li { margin-bottom: 0.7rem; }
+    .alerta { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
 <h1>📊 Informe Automático IoT - Granjas Avícolas</h1>
-<p>📅 Fecha: 14 de julio de 2025 - 18:56 (GMT-4)</p>
+<p>📅 Fecha: 14 de julio de 2025 - 19:43 (GMT-4)</p>
 
 <h2>📌 Agrupación de comportamientos</h2>
 <img src="clusters.png"><br><br>
-<ul><li><span style='color:red'><b>Patrón 1</b>: ⚫ Contaminación crítica: niveles peligrosos de polvo. Ventilación urgente.</span></li><li><span style='color:blue'><b>Patrón 2</b>: 🟣 Oscuridad prolongada: baja iluminación. Posible letargo o baja actividad.</span></li><li><span style='color:green'><b>Patrón 3</b>: 🟠 Polvo y NH₃ elevados: alerta respiratoria.</span></li></ul>
+<ul><li><span style='color:red'><b>Patrón 1</b>: ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li><li><span style='color:blue'><b>Patrón 2</b>: 🟠 Polvo y NH₃ elevados: alerta respiratoria.</span></li><li><span style='color:green'><b>Patrón 3</b>: 🟣 Oscuridad prolongada: baja iluminación. Posible letargo o baja actividad.</span></li></ul>
 
 <h2>🗺 Mapa de calor de variables por patrón</h2>
 <img src="heatmap.png"><br><br>
@@ -28,6 +29,57 @@
 
 <h2>📈 Tendencias recientes - Contaminantes</h2>
 <img src="tendencia_2.png"><br><br>
+
+<h2>📊 Resumen numérico</h2>
+<table class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>temperatura</th>
+      <th>humedad_aire</th>
+      <th>humedad_suelo</th>
+      <th>iluminacion</th>
+      <th>nh3</th>
+      <th>pm25</th>
+      <th>pm10</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>min</th>
+      <td>14.0</td>
+      <td>50.0</td>
+      <td>70.0</td>
+      <td>50.0</td>
+      <td>10.0</td>
+      <td>20.0</td>
+      <td>50.0</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>17.7</td>
+      <td>65.8</td>
+      <td>78.2</td>
+      <td>377.8</td>
+      <td>18.0</td>
+      <td>47.8</td>
+      <td>102.2</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>23.7</td>
+      <td>86.7</td>
+      <td>91.7</td>
+      <td>900.0</td>
+      <td>40.0</td>
+      <td>90.0</td>
+      <td>186.7</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>⚠️ Alertas</h2>
+<ul><li class='alerta'>⚠️ Alta correlación entre PM2.5 y PM10: posible contaminación común.</li><li class='alerta'>⚠️ Aumento conjunto de luz y temperatura: riesgo de estrés térmico.</li></ul>
 
 </body>
 </html>
