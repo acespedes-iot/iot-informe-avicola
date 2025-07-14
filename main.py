@@ -113,7 +113,7 @@ plt.rcParams.update({
 })
 
 # 1️⃣ Gráfico de ambiente
-plt.figure(figsize=(10, 5))
+plt.figure(figsize=(7.5, 5))
 for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.ylabel("°C / % humedad")
@@ -126,7 +126,7 @@ plt.savefig("tendencia_1.png")
 plt.close()
 
 # 2️⃣ Gráfico de contaminantes
-plt.figure(figsize=(10, 5))
+plt.figure(figsize=(7.5, 5))
 for var in ["iluminacion", "nh3", "pm25", "pm10"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.ylabel("Lux / ppm")
