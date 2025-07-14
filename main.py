@@ -112,31 +112,30 @@ plt.rcParams.update({
     'legend.fontsize': 12
 })
 
-# 1️⃣ Gráfico de ambiente
-plt.figure(figsize=(7.5, 5))
+## 1️⃣ Gráfico: Temperatura, humedad aire y humedad suelo
+plt.figure(figsize=(7.5, 5))  # ← cambio aquí
 for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.ylabel("°C / % humedad")
-plt.xlabel("Fecha")
-plt.title("📈 Tendencias recientes - Ambiente")
 plt.xticks(rotation=45)
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=3, frameon=False)
+plt.title("📈 Tendencias recientes - Ambiente")
+plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=3)
 plt.tight_layout()
 plt.savefig("tendencia_1.png")
 plt.close()
 
-# 2️⃣ Gráfico de contaminantes
-plt.figure(figsize=(7.5, 5))
+## 2️⃣ Gráfico: Iluminación, NH3, PM2.5, PM10
+plt.figure(figsize=(7.5, 5))  # ← cambio aquí
 for var in ["iluminacion", "nh3", "pm25", "pm10"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.ylabel("Lux / ppm")
-plt.xlabel("Fecha")
-plt.title("📈 Tendencias recientes - Contaminantes")
 plt.xticks(rotation=45)
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=4, frameon=False)
+plt.title("📈 Tendencias recientes - Contaminantes")
+plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=4)
 plt.tight_layout()
 plt.savefig("tendencia_2.png")
 plt.close()
+
 
 # 🧠 Interpretación
 interpretaciones = []
