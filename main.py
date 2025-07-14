@@ -67,18 +67,10 @@ sns.heatmap(
     linecolor='gray',
     ax=ax
 )
-
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
         val = cent.iloc[i, j]
-        ax.text(
-            j + 0.5, i + 0.5,
-            f"{val:.1f}",
-            ha='center', va='center',
-            fontsize=12,
-            fontweight='bold',
-            color='black'
-        )
+        ax.text(j + 0.5, i + 0.5, f"{val:.1f}", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
 
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
@@ -88,7 +80,6 @@ plt.close()
 
 # 🔘 Clústeres 2D
 colores = ["red", "blue", "green"]
-
 plt.rcParams.update({
     'font.size': 18,
     'axes.titlesize': 20,
@@ -97,7 +88,6 @@ plt.rcParams.update({
     'ytick.labelsize': 16,
     'legend.fontsize': 16
 })
-
 plt.figure()
 for c in range(3):
     grupo = df[df["cluster"] == c]
@@ -109,31 +99,43 @@ plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
 
-# 📈 Tendencias en dos gráficos separados
+# 📈 Tendencias en dos gráficos separados (con buen estilo)
 df_ordenado = df.sort_values("fecha")
 
-## 1️⃣ Gráfico: Temperatura, humedad aire y humedad suelo
-plt.figure(figsize=(12, 6))
+# Estilo común
+plt.rcParams.update({
+    'font.size': 14,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12
+})
+
+# 1️⃣ Gráfico de ambiente
+plt.figure(figsize=(10, 5))
 for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.ylabel("°C / % humedad")
-plt.xticks(rotation=45)
+plt.xlabel("Fecha")
 plt.title("📈 Tendencias recientes - Ambiente")
-plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=3)
+plt.xticks(rotation=45)
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=3, frameon=False)
 plt.tight_layout()
-plt.savefig("tendencia_1.png", bbox_inches='tight')
+plt.savefig("tendencia_1.png")
 plt.close()
 
-## 2️⃣ Gráfico: Iluminación, NH3, PM2.5, PM10
-plt.figure(figsize=(12, 6))
+# 2️⃣ Gráfico de contaminantes
+plt.figure(figsize=(10, 5))
 for var in ["iluminacion", "nh3", "pm25", "pm10"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.ylabel("Lux / ppm")
-plt.xticks(rotation=45)
+plt.xlabel("Fecha")
 plt.title("📈 Tendencias recientes - Contaminantes")
-plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=4)
+plt.xticks(rotation=45)
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=4, frameon=False)
 plt.tight_layout()
-plt.savefig("tendencia_2.png", bbox_inches='tight')
+plt.savefig("tendencia_2.png")
 plt.close()
 
 # 🧠 Interpretación
@@ -149,7 +151,6 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     color = colores[idx_num]
 
     interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
-
     if temp > 29 and hum_aire > 70 and nh3 > 25:
         interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
     elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
@@ -170,7 +171,6 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
         interp += "🟢 Condiciones ideales de confort ambiental y productivo.</span></li>"
     else:
         interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
-
     interpretaciones.append(interp)
 
 # 📝 HTML con fecha en español
