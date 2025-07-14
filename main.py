@@ -56,7 +56,6 @@ cent_norm = cent.copy()
 for col in cent.columns:
     cmin, cmax = cent[col].min(), cent[col].max()
     cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
-
 fig, ax = plt.subplots(figsize=(14, 4))
 heat = sns.heatmap(
     cent_norm,
@@ -68,19 +67,23 @@ heat = sns.heatmap(
     cbar_kws={
         "orientation": "horizontal",
         "shrink": 0.6,
-        "pad": 0.15
+        "pad": 0.2  # AUMENTAR separación con eje X
     }
 )
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
         val = cent.iloc[i, j]
-        ax.text(j + 0.5, i + 0.5, f"{val:.1f}", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
+        ax.text(j + 0.5, i + 0.5, f"{val:.1f}", ha='center', va='center',
+                fontsize=12, fontweight='bold', color='black')
 
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
 plt.title("Mapa de calor de condiciones por patrón", fontsize=16)
+
+plt.subplots_adjust(bottom=0.25)  # deja espacio debajo del gráfico
 plt.savefig("heatmap.png", bbox_inches='tight')
 plt.close()
+
 
 # 🔘 Clústeres 2D
 colores = ["red", "blue", "green"]
@@ -122,9 +125,8 @@ plt.ylabel("°C / % humedad")
 plt.xticks(rotation=45)
 plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
 plt.title("📈 Tendencias recientes - Ambiente")
-plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=3)
-plt.subplots_adjust(bottom=0.3)
-plt.tight_layout()
+plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=3)  # más abajo
+plt.subplots_adjust(bottom=0.35)  # más espacio vertical
 plt.savefig("tendencia_1.png")
 plt.close()
 
@@ -136,9 +138,8 @@ plt.ylabel("Lux / ppm")
 plt.xticks(rotation=45)
 plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
 plt.title("📈 Tendencias recientes - Contaminantes")
-plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=4)
-plt.subplots_adjust(bottom=0.3)
-plt.tight_layout()
+plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4), ncol=4)  # más abajo
+plt.subplots_adjust(bottom=0.35)
 plt.savefig("tendencia_2.png")
 plt.close()
 
