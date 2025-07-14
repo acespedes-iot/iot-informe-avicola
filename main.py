@@ -71,6 +71,9 @@ sns.heatmap(
         "pad": 0.25
     }
 )
+# Ajuste para evitar solapamiento con los textos del eje X
+plt.xticks(rotation=45, ha='right')
+plt.subplots_adjust(bottom=0.3)
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
         val = cent.iloc[i, j]
