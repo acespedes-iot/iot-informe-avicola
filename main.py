@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -35,11 +36,22 @@ def obtener_feed(feed):
 data = {k: obtener_feed(v) for k, v in FEEDS.items()}
 n = min(len(v) for v in data.values())
 
-# 📊 Construir DataFrame
+# 📊 Construcción inicial del DataFrame
 df = pd.DataFrame({
     "fecha": pd.to_datetime([x['created_at'] for x in data['temperatura'][:n]]) - timedelta(hours=4),
     **{k: [float(x['value']) for x in data[k][:n]] for k in FEEDS if k != 'fecha'}
 })
+
+# 🧼 Eliminación de valores atípicos por desviación estándar
+for col in FEEDS:
+    if col in df:
+        media, std = df[col].mean(), df[col].std()
+        df[col] = np.where((df[col] < media - 3 * std) | (df[col] > media + 3 * std), np.nan, df[col])
+        df[col] = df[col].interpolate(limit_direction="both")
+
+# 📉 Suavizado de curvas
+df = df.sort_values("fecha")
+df[FEEDS.keys()] = df[FEEDS.keys()].rolling(window=3, min_periods=1).mean()
 
 # 🔍 Clustering
 X = df.drop(columns=["fecha"])
@@ -71,14 +83,12 @@ sns.heatmap(
         "pad": 0.25
     }
 )
-# Ajuste para evitar solapamiento con los textos del eje X
 plt.xticks(rotation=45, ha='right')
 plt.subplots_adjust(bottom=0.3)
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
         val = cent.iloc[i, j]
         ax.text(j + 0.5, i + 0.5, f"{val:.1f}", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
-
 ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
 ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
 plt.title("Mapa de calor de condiciones por patrón", fontsize=16)
@@ -107,10 +117,7 @@ plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
 
-# 📈 Tendencias en dos gráficos separados
-df_ordenado = df.sort_values("fecha")
-
-# 1️⃣ Ambiente
+# 📈 Tendencias (2 gráficos separados)
 plt.rcParams.update({
     'font.size': 14,
     'axes.titlesize': 16,
@@ -119,9 +126,11 @@ plt.rcParams.update({
     'ytick.labelsize': 12,
     'legend.fontsize': 12
 })
+
+# 1️⃣ Tendencias - Ambiente
 plt.figure(figsize=(6.4, 5.5))
 for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
+    plt.plot(df["fecha"], df[var], label=var, linewidth=2.5)
 plt.ylabel("°C / % humedad")
 plt.xticks(rotation=45)
 plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
@@ -131,10 +140,10 @@ plt.subplots_adjust(bottom=0.35)
 plt.savefig("tendencia_1.png")
 plt.close()
 
-# 2️⃣ Contaminantes
+# 2️⃣ Tendencias - Contaminantes
 plt.figure(figsize=(6.4, 5.5))
 for var in ["iluminacion", "nh3", "pm25", "pm10"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
+    plt.plot(df["fecha"], df[var], label=var, linewidth=2.5)
 plt.ylabel("Lux / ppm")
 plt.xticks(rotation=45)
 plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
@@ -144,43 +153,25 @@ plt.subplots_adjust(bottom=0.35)
 plt.savefig("tendencia_2.png")
 plt.close()
 
-# 🧠 Interpretaciones
-interpretaciones = []
-for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
-    temp = row["temperatura"]
-    hum_aire = row["humedad_aire"]
-    hum_suelo = row["humedad_suelo"]
-    nh3 = row["nh3"]
-    ilum = row["iluminacion"]
-    pm25 = row["pm25"]
-    pm10 = row["pm10"]
-    color = colores[idx_num]
+# 📋 Resumen de tendencias
+resumen = df[FEEDS.keys()].describe().loc[["mean", "min", "max"]].round(1)
+resumen_html = resumen.to_html(classes="table", border=0)
 
-    interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
-    if temp > 29 and hum_aire > 70 and nh3 > 25:
-        interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
-    elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
-        interp += "🟠 Polvo y NH₃ elevados: alerta respiratoria.</span></li>"
-    elif hum_suelo > 50 and nh3 > 25 and (pm25 > 60 or pm10 > 150):
-        interp += "🟤 Cama empapada con gases y polvo: foco de enfermedades.</span></li>"
-    elif temp > 30 and ilum > 400:
-        interp += "🔶 Estrés lumínico-térmico: calor + luz excesiva.</span></li>"
-    elif temp > 29 and hum_aire < 40:
-        interp += "🟡 Estrés térmico seco: calor con humedad baja. Riesgo de deshidratación.</span></li>"
-    elif ilum < 150:
-        interp += "🟣 Oscuridad prolongada: baja iluminación. Posible letargo o baja actividad.</span></li>"
-    elif pm25 > 70 or pm10 > 200:
-        interp += "⚫ Contaminación crítica: niveles peligrosos de polvo. Ventilación urgente.</span></li>"
-    elif 22 <= temp <= 25 and 60 <= hum_aire <= 80 and ilum < 200:
-        interp += "⚪ Noche saludable: condiciones adecuadas para el descanso.</span></li>"
-    elif 24 <= temp <= 28 and 50 <= hum_aire <= 70 and nh3 < 20 and pm25 < 35 and pm10 < 100 and 200 <= ilum <= 500:
-        interp += "🟢 Condiciones ideales de confort ambiental y productivo.</span></li>"
-    else:
-        interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
+# 🔗 Correlaciones
+correlacion = df[FEEDS.keys()].corr().round(2)
+correlacion_html = correlacion.to_html(classes="table", border=0)
 
-    interpretaciones.append(interp)
+# 🚨 Alertas simples
+alertas = []
+if df["temperatura"].max() > 32:
+    alertas.append("⚠️ Alerta: Temperatura muy elevada.")
+if df["nh3"].max() > 40:
+    alertas.append("⚠️ Alerta: Niveles críticos de amoníaco.")
+if df["pm10"].max() > 250:
+    alertas.append("⚠️ Alerta: Alta concentración de partículas PM10.")
+alertas_html = "<ul>" + "".join(f"<li>{a}</li>" for a in alertas) + "</ul>" if alertas else "<p>No se detectaron alertas críticas.</p>"
 
-# 📝 HTML
+# 📝 HTML final
 meses = {
     "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
     "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
@@ -201,6 +192,8 @@ html = f'''
     h1, h2 {{ color: #2c3e50; }}
     ul {{ padding-left: 1.2rem; }}
     li {{ margin-bottom: 0.7rem; }}
+    .table {{ border-collapse: collapse; width: 100%; }}
+    .table th, .table td {{ border: 1px solid #ccc; padding: 6px; text-align: center; }}
   </style>
 </head>
 <body>
@@ -209,7 +202,6 @@ html = f'''
 
 <h2>📌 Agrupación de comportamientos</h2>
 <img src="clusters.png"><br><br>
-<ul>{''.join(interpretaciones)}</ul>
 
 <h2>🗺 Mapa de calor de variables por patrón</h2>
 <img src="heatmap.png"><br><br>
@@ -220,6 +212,15 @@ html = f'''
 <h2>📈 Tendencias recientes - Contaminantes</h2>
 <img src="tendencia_2.png"><br><br>
 
+<h2>📋 Resumen estadístico</h2>
+{resumen_html}
+
+<h2>🔗 Correlaciones entre variables</h2>
+{correlacion_html}
+
+<h2>🚨 Alertas detectadas</h2>
+{alertas_html}
+
 </body>
 </html>
 '''
@@ -227,4 +228,4 @@ html = f'''
 with open("informe.html", "w") as f:
     f.write(html)
 
-print("✅ Informe generado correctamente")
+print("✅ Informe generado con análisis avanzado correctamente")
