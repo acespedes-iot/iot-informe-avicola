@@ -99,10 +99,8 @@ plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
 
-# 📈 Tendencias (dos gráficos)
+# 📈 Tendencias en dos gráficos separados
 df_ordenado = df.sort_values("fecha")
-
-# Estilo
 plt.rcParams.update({
     'font.size': 14,
     'axes.titlesize': 16,
@@ -112,12 +110,13 @@ plt.rcParams.update({
     'legend.fontsize': 12
 })
 
-# 1️⃣ Ambiente
-plt.figure(figsize=(6.4, 5))
+# 1️⃣ Tendencias - Ambiente
+plt.figure(figsize=(6.4, 5))  # 15% menos ancho que 7.5
 for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
+    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
 plt.ylabel("°C / % humedad")
 plt.xticks(rotation=45)
+plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
 plt.title("📈 Tendencias recientes - Ambiente")
 plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=3)
 plt.subplots_adjust(bottom=0.3)
@@ -125,12 +124,13 @@ plt.tight_layout()
 plt.savefig("tendencia_1.png")
 plt.close()
 
-# 2️⃣ Contaminantes
+# 2️⃣ Tendencias - Contaminantes
 plt.figure(figsize=(6.4, 5))
 for var in ["iluminacion", "nh3", "pm25", "pm10"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
+    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
 plt.ylabel("Lux / ppm")
 plt.xticks(rotation=45)
+plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
 plt.title("📈 Tendencias recientes - Contaminantes")
 plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=4)
 plt.subplots_adjust(bottom=0.3)
@@ -149,8 +149,8 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     pm25 = row["pm25"]
     pm10 = row["pm10"]
     color = colores[idx_num]
-    interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
 
+    interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
     if temp > 29 and hum_aire > 70 and nh3 > 25:
         interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
     elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
@@ -171,10 +171,9 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
         interp += "🟢 Condiciones ideales de confort ambiental y productivo.</span></li>"
     else:
         interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
-
     interpretaciones.append(interp)
 
-# 📅 Fecha con formato español
+# 📝 HTML con fecha en español
 meses = {
     "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
     "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
@@ -183,7 +182,6 @@ meses = {
 now = datetime.now() - timedelta(hours=4)
 fecha_str = f"{now.day} de {meses[now.strftime('%m')]} de {now.year} - {now.strftime('%H:%M')} (GMT-4)"
 
-# 📝 HTML
 html = f'''
 <html>
 <head>
@@ -214,6 +212,7 @@ html = f'''
 
 <h2>📈 Tendencias recientes - Contaminantes</h2>
 <img src="tendencia_2.png"><br><br>
+
 </body>
 </html>
 '''
