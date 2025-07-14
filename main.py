@@ -1,6 +1,7 @@
+# main.py
+
 import requests
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -8,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 import os
+import numpy as np
 
 # 📡 Configuración de Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
@@ -41,14 +43,11 @@ df = pd.DataFrame({
     **{k: [float(x['value']) for x in data[k][:n]] for k in FEEDS if k != 'fecha'}
 })
 
-# 🧹 Eliminación de datos erráticos (outliers con Z-score)
-for col in FEEDS.keys():
-    z = np.abs((df[col] - df[col].mean()) / df[col].std())
-    df[col] = np.where(z > 3, np.nan, df[col])
-df = df.fillna(method='ffill').fillna(method='bfill')
+# 🧹 Suavizado de curvas y eliminación de valores erráticos
+for var in FEEDS:
+    df = df[np.abs(df[var] - df[var].rolling(window=5, min_periods=1).mean()) < 3 * df[var].std()]
 
-# 📉 Suavizado de curvas
-df[list(FEEDS.keys())] = df[list(FEEDS.keys())].rolling(window=3, min_periods=1).mean()
+df[FEEDS.keys()] = df[FEEDS.keys()].rolling(window=3, min_periods=1).mean()
 
 # 🔍 Clustering
 X = df.drop(columns=["fecha"])
@@ -59,115 +58,17 @@ df["cluster"] = kmeans.fit_predict(X_scaled)
 cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
 cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
 
-# 🗺 Mapa de calor
-mpl.rcParams.update({'font.size': 12})
-cent_norm = cent.copy()
-for col in cent.columns:
-    cmin, cmax = cent[col].min(), cent[col].max()
-    cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
+# 📊 Resumen de estadísticas
+resumen = df.describe().loc[["mean", "min", "max", "std"]].rename(index={
+    "mean": "Promedio", "min": "Mínimo", "max": "Máximo", "std": "Desviación"
+}).round(2)
 
-fig, ax = plt.subplots(figsize=(14, 5.5))
-sns.heatmap(
-    cent_norm,
-    cmap="coolwarm",
-    annot=False,
-    linewidths=0.5,
-    linecolor='gray',
-    ax=ax,
-    cbar_kws={
-        "orientation": "horizontal",
-        "shrink": 0.6,
-        "pad": 0.25
-    }
-)
-plt.xticks(rotation=45, ha='right')
-plt.subplots_adjust(bottom=0.35)
-for i in range(cent.shape[0]):
-    for j in range(cent.shape[1]):
-        val = cent.iloc[i, j]
-        ax.text(j + 0.5, i + 0.5, f"{val:.1f}", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
+tabla_html = resumen.to_html(classes="tabla", border=1, justify="center", col_space=100)
 
-ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
-ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
-plt.title("Mapa de calor de condiciones por patrón", fontsize=16)
-plt.savefig("heatmap.png", bbox_inches='tight')
-plt.close()
-
-# 🔘 Clústeres 2D
+# 🧠 Interpretaciones de patrones
 colores = ["red", "blue", "green"]
-plt.rcParams.update({
-    'font.size': 18,
-    'axes.titlesize': 20,
-    'axes.labelsize': 18,
-    'xtick.labelsize': 16,
-    'ytick.labelsize': 16,
-    'legend.fontsize': 16
-})
-plt.figure()
-for c in range(3):
-    grupo = df[df["cluster"] == c]
-    plt.scatter(grupo["temperatura"], grupo["nh3"], color=colores[c], label=f"Patrón {c+1}")
-plt.xlabel("Temperatura (°C)")
-plt.ylabel("NH₃ (ppm)")
-plt.legend()
-plt.title("Agrupación de Comportamientos")
-plt.tight_layout()
-plt.savefig("clusters.png")
-
-# 📈 Tendencias
-df_ordenado = df.sort_values("fecha")
-plt.rcParams.update({
-    'font.size': 15,
-    'axes.titlesize': 17,
-    'axes.labelsize': 15,
-    'xtick.labelsize': 13,
-    'ytick.labelsize': 13,
-    'legend.fontsize': 13
-})
-
-## Ambiente
-plt.figure(figsize=(6.4, 5.5))
-for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
-plt.ylabel("°C / % humedad")
-plt.xticks(rotation=45)
-plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
-plt.title("📈 Tendencias recientes - Ambiente")
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=3)
-plt.subplots_adjust(bottom=0.35)
-plt.savefig("tendencia_1.png")
-plt.close()
-
-## Contaminantes
-plt.figure(figsize=(6.4, 5.5))
-for var in ["iluminacion", "nh3", "pm25", "pm10"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
-plt.ylabel("Lux / ppm")
-plt.xticks(rotation=45)
-plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
-plt.title("📈 Tendencias recientes - Contaminantes")
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=4)
-plt.subplots_adjust(bottom=0.35)
-plt.savefig("tendencia_2.png")
-plt.close()
-
-# 📊 Resumen de tendencias
-resumen_tendencias = df[list(FEEDS.keys())].describe().loc[["min", "mean", "max"]]
-resumen_html = resumen_tendencias.to_html(float_format="%.1f", border=0)
-
-# 🔔 Correlación y alertas
-correlaciones = df[list(FEEDS.keys())].corr()
-alertas = []
-
-if correlaciones.loc["temperatura", "humedad_aire"] < -0.6:
-    alertas.append("⚠️ Inversión temperatura-humedad detectada (alta temperatura reduce humedad).")
-if correlaciones.loc["pm25", "pm10"] > 0.8:
-    alertas.append("⚠️ Alta correlación entre PM2.5 y PM10: posible contaminación común.")
-if correlaciones.loc["iluminacion", "temperatura"] > 0.7:
-    alertas.append("⚠️ Aumento conjunto de luz y temperatura: riesgo de estrés térmico.")
-
-# 🧠 Interpretaciones por patrón
 interpretaciones = []
+
 for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     temp = row["temperatura"]
     hum_aire = row["humedad_aire"]
@@ -179,29 +80,45 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     color = colores[idx_num]
 
     interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
+
     if temp > 29 and hum_aire > 70 and nh3 > 25:
-        interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
+        interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃. "
+        interp += "➡️ Mejorar ventilación y revisar manejo de cama.</span></li>"
     elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
-        interp += "🟠 Polvo y NH₃ elevados: alerta respiratoria.</span></li>"
+        interp += "🟠 Polvo y NH₃ elevados: alerta respiratoria. "
+        interp += "➡️ Aumentar ventilación y evaluar frecuencia de limpieza.</span></li>"
     elif hum_suelo > 50 and nh3 > 25 and (pm25 > 60 or pm10 > 150):
-        interp += "🟤 Cama empapada con gases y polvo: foco de enfermedades.</span></li>"
+        interp += "🟤 Cama empapada con gases y polvo: foco de enfermedades. "
+        interp += "➡️ Cambiar cama y reducir humedad excesiva en galpón.</span></li>"
     elif temp > 30 and ilum > 400:
-        interp += "🔶 Estrés lumínico-térmico: calor + luz excesiva.</span></li>"
+        interp += "🔶 Estrés lumínico-térmico: calor + luz excesiva. "
+        interp += "➡️ Reducir intensidad lumínica y mejorar ventilación.</span></li>"
     elif temp > 29 and hum_aire < 40:
-        interp += "🟡 Estrés térmico seco: calor con humedad baja. Riesgo de deshidratación.</span></li>"
+        interp += "🟡 Estrés térmico seco: calor con humedad baja. "
+        interp += "➡️ Añadir nebulización o humidificadores.</span></li>"
     elif ilum < 150:
-        interp += "🟣 Oscuridad prolongada: baja iluminación. Posible letargo o baja actividad.</span></li>"
+        interp += "🟣 Oscuridad prolongada: baja iluminación. "
+        interp += "➡️ Revisión de temporizador de luz o bombillas LED.</span></li>"
     elif pm25 > 70 or pm10 > 200:
-        interp += "⚫ Contaminación crítica: niveles peligrosos de polvo. Ventilación urgente.</span></li>"
+        interp += "⚫ Contaminación crítica: niveles peligrosos de polvo. "
+        interp += "➡️ Revisar entradas de aire y uso de filtros si es posible.</span></li>"
     elif 22 <= temp <= 25 and 60 <= hum_aire <= 80 and ilum < 200:
-        interp += "⚪ Noche saludable: condiciones adecuadas para el descanso.</span></li>"
+        interp += "⚪ Noche saludable: condiciones adecuadas para el descanso. "
+        interp += "➡️ Mantener programación nocturna controlada.</span></li>"
     elif 24 <= temp <= 28 and 50 <= hum_aire <= 70 and nh3 < 20 and pm25 < 35 and pm10 < 100 and 200 <= ilum <= 500:
-        interp += "🟢 Condiciones ideales de confort ambiental y productivo.</span></li>"
+        interp += "🟢 Condiciones ideales de confort ambiental y productivo. "
+        interp += "✅ Mantener monitoreo y ajustes finos.</span></li>"
     else:
-        interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
+        interp += "ℹ️ Combinación atípica: requiere seguimiento técnico. "
+        interp += "➡️ Revisión integral del ambiente.</span></li>"
+
     interpretaciones.append(interp)
 
-# 📝 HTML
+# 📊 Correlación entre variables
+correlacion = df[FEEDS.keys()].corr().round(2)
+cor_html = correlacion.to_html(classes="tabla", border=1, justify="center", col_space=100)
+
+# 📝 HTML final
 meses = {
     "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
     "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
@@ -222,7 +139,8 @@ html = f'''
     h1, h2 {{ color: #2c3e50; }}
     ul {{ padding-left: 1.2rem; }}
     li {{ margin-bottom: 0.7rem; }}
-    .alerta {{ color: red; font-weight: bold; }}
+    .tabla td, .tabla th {{ padding: 6px; text-align: center; border: 1px solid #ccc; }}
+    .tabla th {{ background-color: #f2f2f2; }}
   </style>
 </head>
 <body>
@@ -242,12 +160,11 @@ html = f'''
 <h2>📈 Tendencias recientes - Contaminantes</h2>
 <img src="tendencia_2.png"><br><br>
 
-<h2>📊 Resumen numérico</h2>
-{resumen_html}
+<h2>📋 Resumen numérico de variables</h2>
+{tabla_html}<br><br>
 
-<h2>⚠️ Alertas</h2>
-<ul>{"".join(f"<li class='alerta'>{a}</li>" for a in alertas) or "<li>Sin alertas críticas.</li>"}</ul>
-
+<h2>🔗 Correlación entre variables</h2>
+{cor_html}
 </body>
 </html>
 '''
