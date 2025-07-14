@@ -88,6 +88,16 @@ plt.close()
 
 # 🔘 Clústeres 2D
 colores = ["red", "blue", "green"]
+
+plt.rcParams.update({
+    'font.size': 18,
+    'axes.titlesize': 20,
+    'axes.labelsize': 18,
+    'xtick.labelsize': 16,
+    'ytick.labelsize': 16,
+    'legend.fontsize': 16
+})
+
 plt.figure()
 for c in range(3):
     grupo = df[df["cluster"] == c]
