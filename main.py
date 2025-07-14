@@ -51,21 +51,25 @@ cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X
 cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
 
 # 🗺 Mapa de calor
-mpl.rcParams.update({'font.size': 12})
+mpl.rcParams.update({'font.size': 13})
 cent_norm = cent.copy()
 for col in cent.columns:
     cmin, cmax = cent[col].min(), cent[col].max()
     cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
 
 fig, ax = plt.subplots(figsize=(14, 4))
-sns.heatmap(
+heat = sns.heatmap(
     cent_norm,
     cmap="coolwarm",
-    cbar_kws={"shrink": 0.6},
     annot=False,
     linewidths=0.5,
     linecolor='gray',
-    ax=ax
+    ax=ax,
+    cbar_kws={
+        "orientation": "horizontal",
+        "shrink": 0.6,
+        "pad": 0.15
+    }
 )
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
@@ -81,12 +85,12 @@ plt.close()
 # 🔘 Clústeres 2D
 colores = ["red", "blue", "green"]
 plt.rcParams.update({
-    'font.size': 18,
-    'axes.titlesize': 20,
-    'axes.labelsize': 18,
-    'xtick.labelsize': 16,
-    'ytick.labelsize': 16,
-    'legend.fontsize': 16
+    'font.size': 20,
+    'axes.titlesize': 22,
+    'axes.labelsize': 20,
+    'xtick.labelsize': 18,
+    'ytick.labelsize': 18,
+    'legend.fontsize': 18
 })
 plt.figure()
 for c in range(3):
@@ -99,19 +103,19 @@ plt.title("Agrupación de Comportamientos")
 plt.tight_layout()
 plt.savefig("clusters.png")
 
-# 📈 Tendencias en dos gráficos separados
+# 📈 Tendencias (dos gráficos separados)
 df_ordenado = df.sort_values("fecha")
 plt.rcParams.update({
-    'font.size': 14,
-    'axes.titlesize': 16,
-    'axes.labelsize': 14,
-    'xtick.labelsize': 12,
-    'ytick.labelsize': 12,
-    'legend.fontsize': 12
+    'font.size': 16,
+    'axes.titlesize': 18,
+    'axes.labelsize': 16,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+    'legend.fontsize': 14
 })
 
-# 1️⃣ Tendencias - Ambiente
-plt.figure(figsize=(6.4, 5))  # 15% menos ancho que 7.5
+# Gráfico 1: Ambiente
+plt.figure(figsize=(6.4, 5))
 for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
 plt.ylabel("°C / % humedad")
@@ -124,7 +128,7 @@ plt.tight_layout()
 plt.savefig("tendencia_1.png")
 plt.close()
 
-# 2️⃣ Tendencias - Contaminantes
+# Gráfico 2: Contaminantes
 plt.figure(figsize=(6.4, 5))
 for var in ["iluminacion", "nh3", "pm25", "pm10"]:
     plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
@@ -138,7 +142,7 @@ plt.tight_layout()
 plt.savefig("tendencia_2.png")
 plt.close()
 
-# 🧠 Interpretación
+# 🧠 Interpretaciones
 interpretaciones = []
 for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     temp = row["temperatura"]
@@ -149,7 +153,6 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     pm25 = row["pm25"]
     pm10 = row["pm10"]
     color = colores[idx_num]
-
     interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
     if temp > 29 and hum_aire > 70 and nh3 > 25:
         interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
@@ -173,7 +176,7 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
         interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
     interpretaciones.append(interp)
 
-# 📝 HTML con fecha en español
+# 📝 HTML
 meses = {
     "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
     "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
