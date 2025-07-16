@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    retention-days: 1       # Mantener los logs del job solo por 1 día
 
     steps:
       - name: Clonar repositorio
@@ -41,5 +42,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-
-
