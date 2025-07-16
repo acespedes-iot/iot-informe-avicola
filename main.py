@@ -1,13 +1,12 @@
 import requests
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-import seaborn as sns
 import os
+import seaborn as sns
+import matplotlib as mpl
 
 # 📡 Configuración de Adafruit IO
 AIO_USERNAME = os.getenv("AIO_USERNAME")
@@ -36,19 +35,11 @@ def obtener_feed(feed):
 data = {k: obtener_feed(v) for k, v in FEEDS.items()}
 n = min(len(v) for v in data.values())
 
+# 📊 Construir DataFrame
 df = pd.DataFrame({
-    "fecha": pd.to_datetime([x['created_at'] for x in data['temperatura'][:n]]) - timedelta(hours=4),
+    "fecha": pd.to_datetime([x['created_at'] for x in data['temperatura'][:n]]),
     **{k: [float(x['value']) for x in data[k][:n]] for k in FEEDS if k != 'fecha'}
 })
-
-# 🧹 Eliminación de datos erráticos (outliers con Z-score)
-for col in FEEDS.keys():
-    z = np.abs((df[col] - df[col].mean()) / df[col].std())
-    df[col] = np.where(z > 3, np.nan, df[col])
-df = df.fillna(method='ffill').fillna(method='bfill')
-
-# 📉 Suavizado de curvas
-df[list(FEEDS.keys())] = df[list(FEEDS.keys())].rolling(window=3, min_periods=1).mean()
 
 # 🔍 Clustering
 X = df.drop(columns=["fecha"])
@@ -57,52 +48,53 @@ X_scaled = scaler.fit_transform(X)
 kmeans = KMeans(n_clusters=3, random_state=42)
 df["cluster"] = kmeans.fit_predict(X_scaled)
 cent = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=X.columns)
-cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
 
-# 🗺 Mapa de calor
-mpl.rcParams.update({'font.size': 12})
+# 🗺 Mapa de calor de condiciones por patrón
+mpl.rcParams.update({
+    'font.size': 12,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12
+})
+
+cent.index = [f"Patrón {i+1}" for i in range(cent.shape[0])]
 cent_norm = cent.copy()
 for col in cent.columns:
     cmin, cmax = cent[col].min(), cent[col].max()
     cent_norm[col] = 0.5 if cmin == cmax else (cent[col] - cmin) / (cmax - cmin)
 
-fig, ax = plt.subplots(figsize=(14, 5.5))
+fig, ax = plt.subplots(figsize=(14, 5))
 sns.heatmap(
     cent_norm,
     cmap="coolwarm",
+    cbar_kws={"shrink": 0.7},
     annot=False,
     linewidths=0.5,
     linecolor='gray',
-    ax=ax,
-    cbar_kws={
-        "orientation": "horizontal",
-        "shrink": 0.6,
-        "pad": 0.25
-    }
+    ax=ax
 )
-plt.xticks(rotation=45, ha='right')
-plt.subplots_adjust(bottom=0.35)
+
 for i in range(cent.shape[0]):
     for j in range(cent.shape[1]):
         val = cent.iloc[i, j]
-        ax.text(j + 0.5, i + 0.5, f"{val:.1f}", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
+        ax.text(
+            j + 0.5, i + 0.5,
+            f"{val:.1f}",
+            ha='center', va='center',
+            fontsize=14,
+            fontweight='bold',
+            color='black'
+        )
 
-ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=12)
-ax.set_yticklabels(cent.index, rotation=0, fontsize=12)
-plt.title("Mapa de calor de condiciones por patrón", fontsize=16)
+ax.set_xticklabels(cent.columns, rotation=45, ha='right', fontsize=13)
+ax.set_yticklabels(cent.index, rotation=0, fontsize=13)
+plt.title("Mapa de calor de condiciones por patrón", fontsize=18)
 plt.savefig("heatmap.png", bbox_inches='tight')
 plt.close()
 
-# 🔘 Clústeres 2D
+# 🔘 Clústeres en 2D
 colores = ["red", "blue", "green"]
-plt.rcParams.update({
-    'font.size': 18,
-    'axes.titlesize': 20,
-    'axes.labelsize': 18,
-    'xtick.labelsize': 16,
-    'ytick.labelsize': 16,
-    'legend.fontsize': 16
-})
 plt.figure()
 for c in range(3):
     grupo = df[df["cluster"] == c]
@@ -115,58 +107,17 @@ plt.tight_layout()
 plt.savefig("clusters.png")
 
 # 📈 Tendencias
+plt.figure()
 df_ordenado = df.sort_values("fecha")
-plt.rcParams.update({
-    'font.size': 15,
-    'axes.titlesize': 17,
-    'axes.labelsize': 15,
-    'xtick.labelsize': 13,
-    'ytick.labelsize': 13,
-    'legend.fontsize': 13
-})
-
-## Ambiente
-plt.figure(figsize=(6.4, 5.5))
-for var in ["temperatura", "humedad_aire", "humedad_suelo"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
-plt.ylabel("°C / % humedad")
+for var in ["temperatura", "humedad_aire", "nh3"]:
+    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var)
 plt.xticks(rotation=45)
-plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
-plt.title("📈 Tendencias recientes - Ambiente")
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=3)
-plt.subplots_adjust(bottom=0.35)
-plt.savefig("tendencia_1.png")
-plt.close()
+plt.legend()
+plt.title("Tendencias principales")
+plt.tight_layout()
+plt.savefig("tendencia.png")
 
-## Contaminantes
-plt.figure(figsize=(6.4, 5.5))
-for var in ["iluminacion", "nh3", "pm25", "pm10"]:
-    plt.plot(df_ordenado["fecha"], df_ordenado[var], label=var, linewidth=2.5)
-plt.ylabel("Lux / ppm")
-plt.xticks(rotation=45)
-plt.grid(True, linestyle='--', linewidth=0.6, alpha=0.6)
-plt.title("📈 Tendencias recientes - Contaminantes")
-plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=4)
-plt.subplots_adjust(bottom=0.35)
-plt.savefig("tendencia_2.png")
-plt.close()
-
-# 📊 Resumen de tendencias
-resumen_tendencias = df[list(FEEDS.keys())].describe().loc[["min", "mean", "max"]]
-resumen_html = resumen_tendencias.to_html(float_format="%.1f", border=0)
-
-# 🔔 Correlación y alertas
-correlaciones = df[list(FEEDS.keys())].corr()
-alertas = []
-
-if correlaciones.loc["temperatura", "humedad_aire"] < -0.6:
-    alertas.append("⚠️ Inversión temperatura-humedad detectada (alta temperatura reduce humedad).")
-if correlaciones.loc["pm25", "pm10"] > 0.8:
-    alertas.append("⚠️ Alta correlación entre PM2.5 y PM10: posible contaminación común.")
-if correlaciones.loc["iluminacion", "temperatura"] > 0.7:
-    alertas.append("⚠️ Aumento conjunto de luz y temperatura: riesgo de estrés térmico.")
-
-# 🧠 Interpretaciones por patrón
+# 🧠 Interpretación de patrones
 interpretaciones = []
 for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     temp = row["temperatura"]
@@ -179,6 +130,7 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
     color = colores[idx_num]
 
     interp = f"<li><span style='color:{color}'><b>{idx_name}</b>: "
+
     if temp > 29 and hum_aire > 70 and nh3 > 25:
         interp += "🔴 Riesgo sanitario: alta temperatura, humedad y NH₃.</span></li>"
     elif nh3 > 25 and (pm25 > 60 or pm10 > 150):
@@ -199,17 +151,10 @@ for idx_num, (idx_name, row) in enumerate(cent.iterrows()):
         interp += "🟢 Condiciones ideales de confort ambiental y productivo.</span></li>"
     else:
         interp += "ℹ️ Combinación atípica: requiere seguimiento técnico.</span></li>"
+
     interpretaciones.append(interp)
 
-# 📝 HTML
-meses = {
-    "01": "enero", "02": "febrero", "03": "marzo", "04": "abril",
-    "05": "mayo", "06": "junio", "07": "julio", "08": "agosto",
-    "09": "septiembre", "10": "octubre", "11": "noviembre", "12": "diciembre"
-}
-now = datetime.now() - timedelta(hours=4)
-fecha_str = f"{now.day} de {meses[now.strftime('%m')]} de {now.year} - {now.strftime('%H:%M')} (GMT-4)"
-
+# 📝 Generar informe HTML
 html = f'''
 <html>
 <head>
@@ -222,32 +167,21 @@ html = f'''
     h1, h2 {{ color: #2c3e50; }}
     ul {{ padding-left: 1.2rem; }}
     li {{ margin-bottom: 0.7rem; }}
-    .alerta {{ color: red; font-weight: bold; }}
   </style>
 </head>
 <body>
 <h1>📊 Informe Automático IoT - Granjas Avícolas</h1>
-<p>📅 Fecha: {fecha_str}</p>
+<p>📅 Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
 
 <h2>📌 Agrupación de comportamientos</h2>
 <img src="clusters.png"><br><br>
 <ul>{''.join(interpretaciones)}</ul>
 
+<h2>📈 Tendencias principales</h2>
+<img src="tendencia.png"><br><br>
+
 <h2>🗺 Mapa de calor de variables por patrón</h2>
-<img src="heatmap.png"><br><br>
-
-<h2>📈 Tendencias recientes - Ambiente</h2>
-<img src="tendencia_1.png"><br><br>
-
-<h2>📈 Tendencias recientes - Contaminantes</h2>
-<img src="tendencia_2.png"><br><br>
-
-<h2>📊 Resumen numérico</h2>
-{resumen_html}
-
-<h2>⚠️ Alertas</h2>
-<ul>{"".join(f"<li class='alerta'>{a}</li>" for a in alertas) or "<li>Sin alertas críticas.</li>"}</ul>
-
+<img src="heatmap.png">
 </body>
 </html>
 '''
