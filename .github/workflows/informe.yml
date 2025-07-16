@@ -43,17 +43,3 @@ jobs:
           publish_dir: ./public
 
 
-defaults:
-  run:
-    shell: bash
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    retention-days: 1  # Conserva por solo 1 día
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-
-retention-days: 1
