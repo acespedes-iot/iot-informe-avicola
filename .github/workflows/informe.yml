@@ -2,7 +2,7 @@ name: Informe Automático Avícola
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Ejecutar cada 15 minutos
+    - cron: '0 * * * *'  # Ejecutar a la hora exacta, cada hora
   workflow_dispatch:
 
 jobs:
